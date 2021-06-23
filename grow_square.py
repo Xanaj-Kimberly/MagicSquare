@@ -43,6 +43,17 @@ m_5 = [[[0, 0], [2, 3], [1, 3], [0, 2]], [[1, 2], [1, 1], [2, 0], [4, 0]],
        [[2, 1], [3, 1], [4, 2], [4, 4]], [[3, 2], [3, 3], [2, 4], [0, 4]],
        [[1, 0], [3, 4]], [[0, 3], [4, 1]], [[3, 0], [0, 1], [1, 4], [4, 3]]]
 
+m_5_1 = [[[0, 0], [2, 1], [1, 3], [4, 2]], [[2, 0], [0, 4], [1, 2], [3, 3]],
+         [[3, 0], [4, 3], [1, 4], [0, 1]], [[4, 0], [3, 2], [1, 1], [2, 4]],
+         [[3, 1], [0, 2], [4, 4], [2, 3]]]
+
+m_7 = [[[0, 0], [3, 2], [5, 1], [1, 3], [4, 4], [3, 0], [0, 6], [2, 3],
+        [1, 1], [3, 5], [4, 2], [0, 3], [6, 6], [3, 4], [1, 5], [5, 3],
+        [2, 2], [3, 6], [6, 0], [4, 3], [5, 5], [3, 1], [2, 4], [6, 3]],
+       [[2, 0], [5, 4], [0, 4], [4, 1], [4, 6], [1, 2], [6, 2], [2, 5]],
+       [[4, 0], [2, 1], [0, 2], [1, 4], [2, 6], [4, 5], [6, 4], [5, 2]],
+       [[5, 0], [6, 5], [1, 6], [0, 1]]]
+
 
 def pow_square(_root, _pow, _mss):
     m_dmag = lambda x, d: m_join(magic_steps(m_split(x, d), _mss), d)
@@ -103,33 +114,55 @@ def get_statics(_m):
 
 def to_star(_m):
     dim = len(_m)
-    max_sz = 1000
-    _sz = int(max_sz / dim)
-    sz = 20 if _sz > 20 else 1 if _sz == 0 else _sz
-    pygame.init()
-    d_sz = (sz * dim + 20, sz * dim + 20)
-    _sc = pygame.display.set_mode(d_sz)
+    used = scs.SortedList()
+    max_sz = 980
+    tp = 10
+    sz = float(max_sz / dim)
+    j_to_xy = lambda _j, _d: [(_j - 1) % _d, int((_j - 1) / _d)]
+    c_to_pg = lambda _xy: (float(_xy[1] * sz + 10), float(_xy[0] * sz + 10))
+    # pygame prepare:
+    pg.init()
+    pg.fastevent.init()
+    d_sz = (max_sz + 20, max_sz + 20)
+    _sc = pg.display.set_mode(d_sz)
     _sc.fill((255, 255, 255))
     pg.display.flip()
-    for _c in get_cycles(_m):
+    c = pg.time.Clock()
+    # start compute & draw
+    for _y in range(dim):
+        for events in pg.fastevent.get():
+            if events.type == pg.QUIT:
+                pg.quit()
+                return
         sc = _sc.convert_alpha()
         sc.fill([0, 0, 0, 0])
-        points = [(x * sz + 10, y * sz + 10) for x, y in _c[:-1]]
-        r = pg.draw.lines(sc, (0, 0, 0, 15), True, points) \
-            if len(points) > 2 \
-            else pg.draw.line(sc, (0, 0, 0, 55), points[0], points[1])
+        for _x in range(1, dim + 1):
+            j = _x + _y * dim
+            x, y = j_to_xy(j, dim)
+            if _m[y][x] == j or _m[y][x] in used:
+                continue
+            a = _m[y][x]
+            x, y = j_to_xy(a, dim)
+            b = _m[y][x]
+            used += [a]
+            pg.draw.line(sc, (0, 0, 0, tp), c_to_pg([x, y]), c_to_pg(j_to_xy(b, dim)))
         _sc.blit(sc, (0, 0))
-        pg.display.update(r)
-    for _s in [(x * sz + 10, y * sz + 10) for x, y in get_statics(_m)]:
-        r = pg.draw.circle(_sc, (200, 200, 0, 70), _s, 5)
-        pg.display.update(r)
-    c = pg.time.Clock()
+        pg.display.update()
+    sc = _sc.convert_alpha()
+    sc.fill([0, 0, 0, 0])
+    for j in range(1, dim * dim + 1):
+        x, y = j_to_xy(j, dim)
+        if _m[y][x] == j:
+            pg.draw.circle(sc, (255, 255, 255, (tp + 50) % 100), c_to_pg([x, y]), 1.5)
+    _sc.blit(sc, (0, 0))
+    pg.display.update()
     while True:
         c.tick(60)
         for events in pg.event.get():
             if events.type == pg.QUIT:
                 pg.quit()
-        pygame.display.update()
+                return
+        pg.display.update()
 
 
 def m_swaps(_m, _x, _root, _pow):
@@ -143,9 +176,9 @@ if __name__ == '__main__':
     pow = 4
     root = 4
     m1 = pow_square(root, pow, m_4_1)
-    for i in [3, 5, 2, 4, 6, 7, 12, 27]:
+    # for i in [3, 5, 2, 4, 6, 7, 12, 27]:
         # swapping columns and rows (chaotic). Comment lines below and above to disable.
-        m1 = m_swaps(m1, i, root, pow)
+    #     m1 = m_swaps(m1, i, root, pow)
     try:
         to_star(m1)
     except pygame.error:
