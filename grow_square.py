@@ -1,5 +1,6 @@
 import numpy as np
 import pygame as pg
+import sortedcontainers as scs
 
 
 def create_matrix(i: int):
@@ -78,16 +79,13 @@ def to_csv(_m):
 def get_cycles(_m):
     ret = []
     dim = len(_m)
-    used = []
+    used = scs.SortedList()
     j_to_xy = lambda _j, _d: [(_j - 1) % _d, int((_j - 1) / _d)]
     xy_to_j = lambda _xy, _d: _xy[0] + _xy[1] * _d + 1
     for j in range(1, dim * dim + 1):
         _p = []
         x, y = j_to_xy(j, dim)
-        if _m[y][x] in used:
-            continue
-        if _m[y][x] == j:
-            used += [_m[y][x]]
+        if _m[y][x] == j or _m[y][x] in used:
             continue
         _p += [[x, y]]
         while True:
