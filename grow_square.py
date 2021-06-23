@@ -71,9 +71,9 @@ def flip_swap(_m, i):
     return _m
 
 
-def to_csv(_m):
-    for x in _m:
-        print(''.join([str(y) + ';' for y in x]))
+def to_csv(_m, path: str):
+    with open(path, 'wb') as f:
+        f.writelines([''.join([str(y) + ';' for y in x]).encode('utf-8') for x in _m])
 
 
 def get_cycles(_m):
